@@ -56,8 +56,13 @@
 </script>
 </head>
 <body>
-  <div id="root"></div>
-  <!-- 移除所有 importmap，直接引用入口文件，由 Vite 处理所有依赖 -->
-  <script type="module" src="./index.tsx"></script>
+  <div id="root">
+    <!-- 如果白屏，这里会显示 loading，方便诊断 -->
+    <div style="display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; color:#666;">
+      正在加载 eSimGlobal...
+    </div>
+  </div>
+  <!-- Vite 入口脚本：必须是绝对路径 /index.tsx，不要用 ./ -->
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
