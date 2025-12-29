@@ -7,51 +7,64 @@ interface PlanCardProps {
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({ plan }) => {
+  const pricePerGb = plan.dataValue === 999999 
+    ? (plan.priceUsd / 50).toFixed(2) // 假设无限流量等同于50GB进行性价比对比
+    : (plan.priceUsd / (plan.dataValue / 1024)).toFixed(2);
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-4">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-indigo-400 hover:shadow-xl transition-all duration-300 group">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-6">
           <div className="flex items-center space-x-3">
-            <img src={plan.providerLogo} alt={plan.providerName} className="w-10 h-10 rounded-lg object-cover" />
+            <div className="relative">
+              <img src={plan.providerLogo} alt={plan.providerName} className="w-12 h-12 rounded-xl object-cover border border-gray-100" />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                <i className={`fa-solid ${plan.speed === '5G' ? 'fa-bolt text-amber-500' : 'fa-signal text-gray-400'} text-[10px]`}></i>
+              </div>
+            </div>
             <div>
-              <h3 className="font-bold text-slate-800">{plan.providerName}</h3>
-              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase">
-                {plan.speed}
-              </span>
+              <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{plan.providerName}</h3>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded tracking-wider">
+                  {plan.speed}
+                </span>
+                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">
+                  {plan.isGlobal ? '全球通用' : '地区套餐'}
+                </span>
+              </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-slate-900">${plan.priceUsd.toFixed(2)}</div>
-            <div className="text-xs text-slate-500">One-time payment</div>
+            <div className="text-2xl font-black text-gray-900">${plan.priceUsd.toFixed(2)}</div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase">一次性支付</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+        <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 rounded-xl">
           <div className="flex flex-col">
-            <span className="text-slate-400">Data</span>
-            <span className="font-semibold text-slate-700">{plan.dataAmount}</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase mb-1">流量容量</span>
+            <span className="text-lg font-extrabold text-gray-900">{plan.dataAmount}</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400">Validity</span>
-            <span className="font-semibold text-slate-700">{plan.durationDays} Days</span>
+          <div className="h-8 w-[1px] bg-gray-200"></div>
+          <div className="flex flex-col text-right">
+            <span className="text-[10px] font-bold text-gray-400 uppercase mb-1">有效期</span>
+            <span className="text-lg font-extrabold text-gray-900">{plan.durationDays} 天</span>
           </div>
         </div>
 
-        <div className="space-y-1 mb-6">
-          {plan.features.slice(0, 2).map((f, i) => (
-            <div key={i} className="flex items-center text-xs text-slate-600">
-              <i className="fa-solid fa-check text-green-500 mr-2"></i>
-              {f}
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-6 px-1">
+          <div className="text-sm font-medium text-green-600 flex items-center">
+            <i className="fa-solid fa-tag mr-1.5 text-xs"></i>
+            每 GB 仅需 ${pricePerGb}
+          </div>
         </div>
 
         <button 
           onClick={() => window.open(plan.buyUrl, '_blank')}
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
+          className="w-full bg-gray-900 hover:bg-indigo-600 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
         >
-          <span>View Deal</span>
-          <i className="fa-solid fa-arrow-right text-xs"></i>
+          <span>立即订购</span>
+          <i className="fa-solid fa-chevron-right text-[10px]"></i>
         </button>
       </div>
     </div>
