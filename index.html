@@ -22,6 +22,8 @@
       background-color: var(--bg);
       color: #0f172a;
       scroll-behavior: smooth;
+      margin: 0;
+      padding: 0;
     }
 
     .hero-gradient {
@@ -55,6 +57,7 @@
 </head>
 <body>
   <div id="root"></div>
+  <!-- 移除所有 importmap，直接引用入口文件，由 Vite 处理所有依赖 -->
   <script type="module" src="./index.tsx"></script>
 </body>
 </html>
