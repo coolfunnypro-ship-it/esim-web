@@ -37,10 +37,6 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
-
-    .card-transition {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
   </style>
 <script type="importmap">
 {
@@ -57,12 +53,14 @@
 </head>
 <body>
   <div id="root">
-    <!-- 如果白屏，这里会显示 loading，方便诊断 -->
-    <div style="display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; color:#666;">
-      正在加载 eSimGlobal...
+    <!-- 初始 Loading，如果显示这个说明 JS 还没开始跑；如果变白说明 JS 跑了但崩了 -->
+    <div id="loading-screen" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; background:#f8fafc;">
+      <div style="width:40px; height:40px; border:4px solid #e2e8f0; border-top:4px solid #4f46e5; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:16px;"></div>
+      <div style="color:#64748b; font-weight:600;">正在启动 eSimGlobal 比价引擎...</div>
+      <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     </div>
   </div>
-  <!-- Vite 入口脚本：必须是绝对路径 /index.tsx，不要用 ./ -->
-  <script type="module" src="/index.tsx"></script>
+  <!-- 使用相对路径引入入口文件，这是 Vite 标准用法 -->
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>
