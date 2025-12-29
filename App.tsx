@@ -1,256 +1,216 @@
 
 import React, { useState, useMemo } from 'react';
-import { REGIONS, PLANS } from './constants.tsx';
-import PlanCard from './components/PlanCard.tsx';
-import AIAssistant from './components/AIAssistant.tsx';
+import { REGIONS, PLANS, PROVIDERS } from './constants';
+import PlanCard from './components/PlanCard';
+import AIAssistant from './components/AIAssistant';
 
 const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'price' | 'data' | 'relevance'>('relevance');
+  const [sortBy, setSortBy] = useState<'price_asc' | 'data_desc' | 'price_gb_asc'>('price_gb_asc');
 
   const filteredPlans = useMemo(() => {
     let result = PLANS.filter(plan => {
-      const matchesSearch = plan.providerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          plan.region.toLowerCase().includes(searchTerm.toLowerCase());
+      const regionData = REGIONS.find(r => r.id === plan.region);
+      const searchStr = `${plan.providerName} ${plan.region} ${regionData?.name || ''}`.toLowerCase();
+      const matchesSearch = searchStr.includes(searchTerm.toLowerCase());
       const matchesRegion = selectedRegion === 'all' || plan.region === selectedRegion;
       return matchesSearch && matchesRegion;
     });
 
-    if (sortBy === 'price') {
+    if (sortBy === 'price_asc') {
       result.sort((a, b) => a.priceUsd - b.priceUsd);
-    } else if (sortBy === 'data') {
+    } else if (sortBy === 'data_desc') {
       result.sort((a, b) => b.dataValue - a.dataValue);
+    } else if (sortBy === 'price_gb_asc') {
+      result.sort((a, b) => {
+        const valA = a.dataValue === 999999 ? a.priceUsd / 50 : a.priceUsd / (a.dataValue / 1024);
+        const valB = b.dataValue === 999999 ? b.priceUsd / 50 : b.priceUsd / (b.dataValue / 1024);
+        return valA - valB;
+      });
     }
 
     return result;
   }, [searchTerm, selectedRegion, sortBy]);
 
   return (
-    <div className="min-h-screen flex flex-col text-slate-900">
+    <div className="min-h-screen flex flex-col">
       {/* 顶部导航 */}
-      <nav className="sticky top-0 z-50 glass-effect border-b border-slate-200">
+      <nav className="sticky top-0 z-50 glass-nav border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => window.location.reload()}>
-              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                <i className="fa-solid fa-signal text-white"></i>
+              <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center">
+                <i className="fa-solid fa-bolt text-white"></i>
               </div>
-              <span className="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">eSimGlobal</span>
+              <span className="text-xl font-bold tracking-tight text-gray-900">eSimGlobal</span>
             </div>
-            <div className="hidden md:flex items-center space-x-8 text-sm font-semibold">
-              <a href="#how-it-works" className="text-slate-600 hover:text-indigo-600 transition-colors">使用流程</a>
-              <a href="#compare" className="text-slate-600 hover:text-indigo-600 transition-colors">套餐比价</a>
-              <a href="#providers" className="text-slate-600 hover:text-indigo-600 transition-colors">合作商</a>
-              <button className="bg-slate-900 text-white px-6 py-2 rounded-xl hover:bg-slate-800 transition-all shadow-md active:scale-95">
-                立即登录
-              </button>
+            <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
+              <a href="#search" className="text-gray-600 hover:text-indigo-600">找套餐</a>
+              <a href="#providers" className="text-gray-600 hover:text-indigo-600">合作商</a>
+              <a href="#" className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">管理我的 eSIM</a>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero 区域 */}
-      <header className="relative overflow-hidden pt-16 pb-20">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-30">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold mb-6">
-                <span className="relative flex h-2 w-2 mr-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-                已覆盖全球 190+ 国家
-              </div>
-              <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 leading-[1.1] mb-6">
-                告别昂贵漫游 <br/>
-                一键开启 <span className="text-indigo-600">全球连接</span>
-              </h1>
-              <p className="text-xl text-slate-500 mb-10 max-w-xl leading-relaxed">
-                实时对比全球 100+ 运营商套餐，平均为每位旅客节省 <span className="text-slate-900 font-bold">85%</span> 的流量费用。
-              </p>
-              
-              <div className="max-w-md">
-                <div className="relative group">
-                  <i className="fa-solid fa-location-dot absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
-                  <input
-                    type="text"
-                    placeholder="输入你想去的国家，如：日本、美国..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-14 pr-4 py-5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none bg-white shadow-sm text-lg"
-                  />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {REGIONS.filter(r => r.popular).slice(0, 4).map(region => (
-                    <button
-                      key={region.id}
-                      onClick={() => setSelectedRegion(region.id)}
-                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${selectedRegion === region.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white border border-slate-200 text-slate-600 hover:border-indigo-300'}`}
-                    >
-                      {region.flagEmoji} {region.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+      {/* Hero 搜索区域 */}
+      <header id="search" className="hero-gradient pt-20 pb-24 text-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">
+            全球 eSIM 套餐对比引擎
+          </h1>
+          <p className="text-xl text-indigo-100 mb-10">
+            在 190+ 国家中寻找最便宜、最快速的移动数据套餐
+          </p>
+          
+          <div className="relative max-w-2xl mx-auto mb-8">
+            <i className="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input
+              type="text"
+              placeholder="你想去哪里？输入国家或地区..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-14 pr-4 py-5 rounded-2xl text-gray-900 shadow-2xl focus:ring-4 focus:ring-white/20 outline-none text-lg font-medium"
+            />
+          </div>
 
-            <div className="lg:col-span-5">
-              <AIAssistant />
-            </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {REGIONS.filter(r => r.popular).map(region => (
+              <button
+                key={region.id}
+                onClick={() => setSelectedRegion(region.id)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
+                  selectedRegion === region.id 
+                  ? 'bg-white text-indigo-600 border-white' 
+                  : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}
+              >
+                {region.flagEmoji} {region.name}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
-      {/* 流程说明 */}
-      <section id="how-it-works" className="py-20 bg-slate-50 border-y border-slate-200">
+      {/* 主体内容 */}
+      <main className="max-w-7xl mx-auto px-4 py-12 w-full grid lg:grid-cols-4 gap-8">
+        {/* 左侧筛选栏 */}
+        <aside className="lg:col-span-1 space-y-8">
+          <section className="bg-white p-6 rounded-2xl border border-gray-200 custom-shadow">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center">
+              <i className="fa-solid fa-sliders mr-2 text-indigo-600"></i> 智能筛选
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">排序方式</label>
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="price_gb_asc">性价比最高 (每GB单价)</option>
+                  <option value="price_asc">价格最低</option>
+                  <option value="data_desc">流量最多</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">目的地</label>
+                <select 
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="all">🌍 全球所有目的地</option>
+                  {REGIONS.map(r => (
+                    <option key={r.id} value={r.id}>{r.flagEmoji} {r.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <AIAssistant />
+        </aside>
+
+        {/* 右侧套餐列表 */}
+        <div className="lg:col-span-3">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              找到 {filteredPlans.length} 个最佳套餐
+            </h2>
+            <div className="text-sm text-gray-500">
+              最后更新: 刚刚
+            </div>
+          </div>
+
+          {filteredPlans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredPlans.map(plan => (
+                <PlanCard key={plan.id} plan={plan} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-16 text-center border-2 border-dashed border-gray-200">
+              <i className="fa-solid fa-plane-slash text-6xl text-gray-200 mb-6"></i>
+              <h3 className="text-xl font-bold text-gray-700">未找到匹配套餐</h3>
+              <p className="text-gray-500 mt-2">试试搜索其他目的地或清除筛选条件</p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* 合作商展示 */}
+      <section id="providers" className="bg-white border-t border-gray-200 py-16">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-center text-3xl font-bold mb-16">只需三步，即刻出发</h2>
-          <div className="grid md:grid-cols-3 gap-10">
-            {[
-              { icon: 'fa-magnifying-glass', title: '搜索目的地', desc: '输入目的地，AI 为你智能匹配最佳套餐' },
-              { icon: 'fa-credit-card', title: '对比并购买', desc: '挑选最便宜或流量最多的方案，在线极速支付' },
-              { icon: 'fa-qrcode', title: '扫码即用', desc: '通过二维码瞬间激活 eSIM，无需换卡' }
-            ].map((step, i) => (
-              <div key={i} className="text-center group">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100 group-hover:scale-110 group-hover:bg-indigo-600 transition-all duration-300">
-                  <i className={`fa-solid ${step.icon} text-2xl text-indigo-600 group-hover:text-white`}></i>
-                </div>
-                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-slate-500 leading-relaxed">{step.desc}</p>
+          <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-10">主流 eSIM 运营商支持</p>
+          <div className="flex flex-wrap justify-center items-center gap-12 opacity-60">
+            {PROVIDERS.map(p => (
+              <div key={p.name} className="flex items-center space-x-2 grayscale hover:grayscale-0 transition cursor-help" title={p.description}>
+                <img src={p.logo} alt={p.name} className="w-10 h-10 rounded-full" />
+                <span className="font-bold text-lg text-gray-800">{p.name}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 套餐列表 */}
-      <main id="compare" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 space-y-6 md:space-y-0">
-          <div>
-            <div className="text-indigo-600 font-bold text-sm tracking-widest uppercase mb-2">对比引擎</div>
-            <h2 className="text-4xl font-extrabold text-slate-900">
-              {selectedRegion === 'all' ? '精选全球套餐' : `${REGIONS.find(r => r.id === selectedRegion)?.name} 最优方案`}
-            </h2>
-          </div>
-
-          <div className="flex items-center space-x-3 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
-            <select 
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="bg-transparent px-4 py-2 text-sm font-semibold focus:outline-none border-r border-slate-100"
-            >
-              <option value="all">🌍 全部地区</option>
-              {REGIONS.map(r => (
-                <option key={r.id} value={r.id}>{r.flagEmoji} {r.name}</option>
-              ))}
-            </select>
-
-            <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-transparent px-4 py-2 text-sm font-semibold focus:outline-none"
-            >
-              <option value="relevance">综合排序</option>
-              <option value="price">价格最低</option>
-              <option value="data">流量最多</option>
-            </select>
-          </div>
-        </div>
-
-        {filteredPlans.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredPlans.map(plan => (
-              <PlanCard key={plan.id} plan={plan} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <i className="fa-solid fa-magnifying-glass text-3xl text-slate-300"></i>
-            </div>
-            <h3 className="text-2xl font-bold text-slate-700">未找到匹配套餐</h3>
-            <p className="text-slate-500 mt-2">换个关键词试试，或者联系我们添加该地区套餐</p>
-            <button 
-              onClick={() => { setSelectedRegion('all'); setSearchTerm(''); }}
-              className="mt-8 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all active:scale-95"
-            >
-              重置筛选条件
-            </button>
-          </div>
-        )}
-      </main>
-
       {/* 页脚 */}
-      <footer className="bg-slate-900 text-slate-400 pt-20 pb-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 mb-20">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center space-x-2 mb-8">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <i className="fa-solid fa-signal text-white"></i>
-                </div>
-                <span className="text-xl font-extrabold text-white">eSimGlobal</span>
+      <footer className="bg-gray-900 text-gray-400 py-12">
+        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-12">
+          <div>
+            <div className="flex items-center space-x-2 text-white mb-6">
+              <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center">
+                <i className="fa-solid fa-bolt text-xs"></i>
               </div>
-              <p className="text-sm leading-relaxed mb-8">
-                全球领先的 eSIM 数字化连接平台。致力于消除国际漫游壁垒，让每一位旅客都能享受平价、高速的网络服务。
-              </p>
-              <div className="flex space-x-5">
-                {[ 'twitter', 'facebook', 'instagram', 'linkedin'].map(social => (
-                  <a key={social} href="#" className="hover:text-white transition-colors text-lg">
-                    <i className={`fa-brands fa-${social}`}></i>
-                  </a>
-                ))}
-              </div>
+              <span className="text-xl font-bold">eSimGlobal</span>
             </div>
-            
+            <p className="text-sm leading-relaxed">
+              您的全球旅行伴侣。我们通过对比全球数百家运营商的实时价格，为您找到最合适的连接方案。
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-8">
             <div>
-              <h4 className="font-bold text-white mb-8">目的地</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">热门目的地</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">欧洲全境</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">北美漫游</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">亚洲快速连接</a></li>
+              <h4 className="text-white font-bold mb-4">热门地区</h4>
+              <ul className="text-sm space-y-2">
+                <li><a href="#" className="hover:text-white">美国 eSIM</a></li>
+                <li><a href="#" className="hover:text-white">日本 eSIM</a></li>
+                <li><a href="#" className="hover:text-white">欧洲 区域</a></li>
               </ul>
             </div>
-
             <div>
-              <h4 className="font-bold text-white mb-8">公司</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">关于我们</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">合作伙伴计划</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">隐私条款</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">联系支持</a></li>
+              <h4 className="text-white font-bold mb-4">关于我们</h4>
+              <ul className="text-sm space-y-2">
+                <li><a href="#" className="hover:text-white">合作咨询</a></li>
+                <li><a href="#" className="hover:text-white">隐私条款</a></li>
+                <li><a href="#" className="hover:text-white">常见问题</a></li>
               </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white mb-8">订阅优惠</h4>
-              <p className="text-sm mb-6">订阅我们的周报，获取最新的旅行折扣和技术动态。</p>
-              <div className="relative">
-                <input 
-                  type="email" 
-                  placeholder="输入邮箱" 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                />
-                <button className="absolute right-2 top-2 bottom-2 bg-indigo-600 text-white px-5 rounded-lg hover:bg-indigo-500 transition-colors">
-                  <i className="fa-solid fa-arrow-right"></i>
-                </button>
-              </div>
             </div>
           </div>
-          
-          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs">
-            <p>© 2024 eSimGlobal. 让连接触手可及。</p>
-            <div className="flex space-x-8 mt-4 md:mt-0 uppercase tracking-widest font-bold">
-              <a href="#" className="hover:text-white transition-colors">隐私政策</a>
-              <a href="#" className="hover:text-white transition-colors">使用协议</a>
-            </div>
+          <div>
+            <h4 className="text-white font-bold mb-4">联系我们</h4>
+            <p className="text-sm mb-4">如有任何问题，欢迎通过以下方式联系：</p>
+            <a href="mailto:support@esimglobal.com" className="text-indigo-400 hover:text-indigo-300 font-medium">support@esimglobal.com</a>
           </div>
         </div>
       </footer>
