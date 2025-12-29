@@ -5,13 +5,16 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // 构建时替换环境变量，防止浏览器运行时报错
+    // 强制替换 process.env 为字符串，防止浏览器端访问 process 报错
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
+  server: {
+    port: 3000
   },
   build: {
     outDir: 'dist',
-    minify: 'esbuild',
-    sourcemap: false
+    sourcemap: false,
+    minify: 'esbuild'
   }
 });
